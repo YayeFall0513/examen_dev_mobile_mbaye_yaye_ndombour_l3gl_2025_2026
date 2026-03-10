@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 class Project {
   final String id;       // Identifiant unique du projet
   final String name;     // Nom du projet
+  final String description;
   final String userId;   // Utilisateur propriétaire du projet
   final String ownerId;
   final DateTime createdAt; // Date de création
@@ -11,7 +12,7 @@ class Project {
     String? id,
     required this.name,
     required this.userId,
-    DateTime? createdAt, required String description, required this.ownerId,
+    DateTime? createdAt, required this.ownerId, required this.description,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now();
 
