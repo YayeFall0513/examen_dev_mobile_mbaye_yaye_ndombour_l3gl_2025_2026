@@ -11,6 +11,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
+  provider: ^6.0.5
 
   # Stockage local pour l'onboarding et les perferences
   shared_preferences: ^2.5.4
