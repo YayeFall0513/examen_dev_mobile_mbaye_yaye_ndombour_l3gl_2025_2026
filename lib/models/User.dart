@@ -60,7 +60,7 @@ class User {
      'email': email,
      'password': password,
      'avatar': avatar,
-     'createdAt': createdAt
+     'createdAt': createdAt.toIso8601String(), // <-- ici
    };
  }
 
@@ -69,12 +69,14 @@ class User {
   */
  factory User.fromMap(Map<String, dynamic> map) {
    return User(
-       id: map['id'] as String,
-       name: map['name'] as String,
-       email: map['email'] as String,
-       password: map['password'] as String,
-       avatar: map['avatar'] as String,
-       createdAt: DateTime.parse(map['createdAt'] as String)
+     id: map['id'] as String,
+     name: map['name'] as String,
+     email: map['email'] as String,
+     password: map['password'] as String,
+     avatar: map['avatar'] != null ? map['avatar'] as String : null,
+     createdAt: map['createdAt'] != null
+         ? DateTime.parse(map['createdAt'] as String)
+         : DateTime.now(),
    );
  }
 
@@ -82,4 +84,6 @@ class User {
   String toString() {
     return 'User(id: $id, name: $name, email: $email)';
   }
+
+
 }
