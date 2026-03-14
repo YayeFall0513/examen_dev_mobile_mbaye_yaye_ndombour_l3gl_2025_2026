@@ -20,10 +20,8 @@ class ProjectProvider extends ChangeNotifier {
     notifyListeners();
 
     await StorageService.instance.init();
-    final projectsMap = StorageService.instance.getUser(); // Pour simplifier, remplacer par storage de projets réel
-    // Ici, normalement tu chargerais une liste de projets par userId depuis le stockage
+    final projectsMap = StorageService.instance.getSavedUser(); // Pour simplifier, remplacer par storage de projets réel
 
-    _projects = []; // Assigner la liste récupérée
     _isLoading = false;
     notifyListeners();
   }

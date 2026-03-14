@@ -10,10 +10,12 @@ class Task {
   final String id;           // Identifiant unique de la tâche
   final String projectId;    // ID du projet auquel elle appartient
   final String title;        // Titre de la tâche
+  final String ownerId;
   final String description;  // Description
   TaskStatus status;          // Statut (modifiable)
   TaskPriority priority;      // Priorité (modifiable)
   final DateTime createdAt;   // Date de création
+  DateTime? dueDate;
 
   Task({
     String? id,
@@ -23,6 +25,7 @@ class Task {
     this.status = TaskStatus.todo,
     this.priority = TaskPriority.medium,
     DateTime? createdAt,
+    this.dueDate, required this.ownerId,
   })  : id = id ?? const Uuid().v4(),
         createdAt = createdAt ?? DateTime.now();
 
@@ -35,6 +38,7 @@ class Task {
     TaskStatus? status,
     TaskPriority? priority,
     DateTime? createdAt,
+    DateTime? dueDate,
   }) {
     return Task(
       id: id ?? this.id,
@@ -44,6 +48,7 @@ class Task {
       status: status ?? this.status,
       priority: priority ?? this.priority,
       createdAt: createdAt ?? this.createdAt,
+      dueDate: dueDate ?? this.dueDate, ownerId: '',
     );
   }
 
@@ -57,6 +62,7 @@ class Task {
       'status': status.name,
       'priority': priority.name,
       'createdAt': createdAt.toIso8601String(),
+      'dueDate': dueDate?.toIso8601String(),
     };
   }
 
@@ -74,6 +80,9 @@ class Task {
               (e) => e.name == map['priority'],
           orElse: () => TaskPriority.medium),
       createdAt: DateTime.parse(map['createdAt'] as String),
+      dueDate: map['dueDate'] != null
+          ? DateTime.parse(map['dueDate'] as String)
+          : null, ownerId: '',
     );
   }
 

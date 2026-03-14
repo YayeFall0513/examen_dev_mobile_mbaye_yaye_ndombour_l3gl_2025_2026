@@ -3,93 +3,74 @@ import 'package:provider/provider.dart';
 import '../../../models/Project.dart';
 import '../../../providers/project_provider.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../projects/project_form_screen.dart';
 import '../../projects/project_detail_screen.dart';
-import '../../../widgets/cards/project_card.dart';
 
 class ProjectsTab extends StatelessWidget {
   final String userId;
+
   const ProjectsTab({super.key, required this.userId});
 
   @override
   Widget build(BuildContext context) {
+    final projectProvider = Provider.of<ProjectProvider>(context);
+    final List<Project> projects = projectProvider.projects;
 
-    return Consumer<ProjectProvider>(
-      builder: (context, projectProvider, child) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Liste des projets",
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
 
-        // Filtrer les projets de l'utilisateur
-        final userProjects = projectProvider.projects
-            .where((p) => p.userId == userId)
-            .toList();
-
-        if (userProjects.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.folder_open, size: 80, color: Colors.grey),
-                SizedBox(height: 16),
-                Text(
-                  "Aucun projet pour le moment",
-                  style: TextStyle(fontSize: 18),
+          // État vide
+          if (projects.isEmpty)
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.folder_open, size: 80, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text(
+                      "Aucun projet disponible",
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            )
+          else
+          // Liste des projets
+            Expanded(
+              child: ListView.builder(
+                itemCount: projects.length,
+                itemBuilder: (context, index) {
+                  final project = projects[index];
+                  return Card(
+                    child: ListTile(
+                      leading: CircleAvatar(backgroundColor: project.color),
+                      title: Text(project.name),
+                      subtitle: Text(project.description),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                ProjectDetailScreen(project: project),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
             ),
-          );
-        }
-
-        return ListView.builder(
-          itemCount: userProjects.length,
-          itemBuilder: (context, index) {
-            final project = userProjects[index];
-            return ProjectCard(
-              project: project,
-              taskCount: 0, // plus tard: compter les tâches via TaskProvider
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ProjectDetailScreen(project: project),
-                  ),
-                );
-              },
-              onMenuSelected: (value) async {
-                if (value == 'edit') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ProjectFormScreen(project: project, userId: '',),
-                    ),
-                  );
-                } else if (value == 'delete') {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (_) => AlertDialog(
-
-                      title: const Text("Supprimer projet"),
-                      content: const Text("Voulez-vous vraiment supprimer ce projet ?"),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text("Annuler"),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: const Text("Supprimer"),
-                        ),
-                      ],
-                    ),
-                  );
-
-                  if (confirm == true) {
-                    await projectProvider.deleteProject(project.id);
-                  }
-                }
-              },
-            );
-          },
-        );
-      },
+        ],
+      ),
     );
   }
 }

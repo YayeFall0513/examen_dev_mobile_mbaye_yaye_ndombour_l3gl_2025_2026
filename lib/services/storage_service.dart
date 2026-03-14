@@ -45,48 +45,38 @@ class StorageService {
   static const String _keyOnboardingComplete = 'onboarding_complete';
   static const String _keyCurrentUser = 'current_user';
 
-  // ===== Onboarding =====
-  bool get isOnboardingComplete {
-    return _prefs.getBool(_keyOnboardingComplete) ?? false;
-  }
-
+  //===== Onboarding =====
+  bool get isOnboardingComplete => _prefs.getBool(_keyOnboardingComplete) ?? false;
   Future<void> setOnboardingComplete(bool value) async {
     await _prefs.setBool(_keyOnboardingComplete, value);
   }
 
-  // ===== USER =====
-
-  /// Sauvegarder l'utilisateur
+  //===== User =====
   Future<void> saveUser(Map<String, dynamic> user) async {
-    String userJson = jsonEncode(user);
-    await _prefs.setString(_keyCurrentUser, userJson);
+    await _prefs.setString('saved_user', jsonEncode(user)); // clé différente
   }
 
-  /// Recuperer utilisateur
-  Map<String, dynamic>? getUser() {
-    String? userJson = _prefs.getString(_keyCurrentUser);
-
-    if (userJson == null) return null;
-
-    return jsonDecode(userJson);
+  Map<String, dynamic>? getSavedUser() {
+    final json = _prefs.getString('saved_user');
+    if (json == null) return null;
+    return jsonDecode(json);
   }
 
-  /// Définir l'utilisateur courant
   Future<void> setCurrentUser(Map<String, dynamic> user) async {
-    await saveUser(user);
+    await _prefs.setString(_keyCurrentUser, jsonEncode(user));
   }
 
-  /// Supprimer utilisateur (logout)
+  Map<String, dynamic>? getCurrentUser() {
+    final json = _prefs.getString('current_user');
+    if (json == null) return null;
+    return jsonDecode(json);
+  }
   Future<void> removeUser() async {
     await _prefs.remove(_keyCurrentUser);
   }
 
-  /// Vérifier si connecté
-  bool get isLoggedIn {
-    return _prefs.containsKey(_keyCurrentUser);
-  }
+  bool get isLoggedIn => _prefs.containsKey(_keyCurrentUser);
 
-  /// Logout complet
   Future<void> clearSession() async {
     await _prefs.remove(_keyCurrentUser);
   }

@@ -12,153 +12,136 @@ class TaskDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final taskProvider = context.read<TaskProvider>();
+    final taskProvider = Provider.of<TaskProvider>(context);
 
-    Future<void> _changeStatus(TaskStatus status) async {
-      await taskProvider.updateTaskStatus(task.id, status);
-    }
+    // récupérer la tâche mise à jour depuis le provider
+    final currentTask =
+    taskProvider.allTasks.firstWhere((t) => t.id == task.id);
 
-    Future<void> _deleteTask() async {
-      final confirm = await showDialog<bool>(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: const Text("Confirmer la suppression"),
-          content: const Text("Voulez-vous vraiment supprimer cette tâche ?"),
-          actions: [
-            TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text("Annuler")),
-            TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text("Supprimer")),
-          ],
-        ),
-      );
-
-      if (confirm == true) {
-        await taskProvider.deleteTask(task.id);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Tâche supprimée")),
-        );
-        Navigator.pop(context); // Retour à l'écran précédent
-      }
-    }
-
-    Color _priorityColor(TaskPriority priority) {
-      switch (priority) {
-        case TaskPriority.high:
-          return Colors.red;
-        case TaskPriority.medium:
-          return Colors.orange;
-        case TaskPriority.low:
-          return Colors.green;
-      }
+    Future<void> changeStatus(TaskStatus status) async {
+      final updatedTask = currentTask.copyWith(status: status);
+      await taskProvider.updateTask(updatedTask);
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Détail tâche"),
+        title: const Text("Détail de la tâche"),
         backgroundColor: AppColors.primary,
         actions: [
+
+          // Modifier tâche
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) =>
-                      TaskFormScreen(task: task, projectId: task.projectId),
+                  builder: (_) => TaskFormScreen(
+                    task: currentTask,
+                    projectId: currentTask.projectId,
+                  ),
                 ),
               );
             },
           ),
+
+          // Supprimer tâche
           IconButton(
             icon: const Icon(Icons.delete),
-            onPressed: _deleteTask,
+            onPressed: () async {
+
+              final confirm = await showDialog(
+                context: context,
+                builder: (_) => AlertDialog(
+                  title: const Text("Supprimer la tâche"),
+                  content: const Text(
+                      "Voulez-vous vraiment supprimer cette tâche ?"),
+                  actions: [
+                    TextButton(
+                      child: const Text("Annuler"),
+                      onPressed: () => Navigator.pop(context, false),
+                    ),
+                    ElevatedButton(
+                      child: const Text("Supprimer"),
+                      onPressed: () => Navigator.pop(context, true),
+                    )
+                  ],
+                ),
+              );
+
+              if (confirm == true) {
+                await taskProvider.deleteTask(currentTask.id);
+
+                Navigator.pop(context);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Tâche supprimée")),
+                );
+              }
+            },
           ),
         ],
       ),
+
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Titre
+
             Text(
-              task.title,
+              currentTask.title,
               style: const TextStyle(
-                fontSize: 24,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 12),
 
-            // Description
+            const SizedBox(height: 10),
+
+            Text(currentTask.description),
+
+            const SizedBox(height: 20),
+
+            const Text(
+              "Statut",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+
+            const SizedBox(height: 10),
+
+            Row(
+              children: [
+
+                ChoiceChip(
+                  label: const Text("À faire"),
+                  selected: currentTask.status == TaskStatus.todo,
+                  onSelected: (_) => changeStatus(TaskStatus.todo),
+                ),
+
+                const SizedBox(width: 10),
+
+                ChoiceChip(
+                  label: const Text("En cours"),
+                  selected: currentTask.status == TaskStatus.inProgress,
+                  onSelected: (_) => changeStatus(TaskStatus.inProgress),
+                ),
+
+                const SizedBox(width: 10),
+
+                ChoiceChip(
+                  label: const Text("Terminé"),
+                  selected: currentTask.status == TaskStatus.done,
+                  onSelected: (_) => changeStatus(TaskStatus.done),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
             Text(
-              task.description.isEmpty ? "Pas de description" : task.description,
-              style: const TextStyle(
-                fontSize: 16,
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Statut
-            const Text("Statut :", style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Row(
-              children: TaskStatus.values.map((status) {
-                final isSelected = task.status == status;
-                return GestureDetector(
-                  onTap: () => _changeStatus(status),
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColors.primary : Colors.grey[200],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      status.name.toUpperCase(),
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black87,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-
-            // Priorité
-            Row(
-              children: [
-                const Text("Priorité : ", style: TextStyle(fontWeight: FontWeight.bold)),
-                Text(
-                  task.priority.name.toUpperCase(),
-                  style: TextStyle(
-                    color: _priorityColor(task.priority),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Date d'échéance
-            Row(
-              children: [
-                const Icon(Icons.calendar_today, size: 18),
-                const SizedBox(width: 8),
-                Text(
-                  task.dueDate != null
-                      ? "${task.dueDate!.day}/${task.dueDate!.month}/${task.dueDate!.year}"
-                      : "Pas de date d'échéance",
-                  style: const TextStyle(fontSize: 16),
-                ),
-              ],
+              "Priorité : ${currentTask.priority.name}",
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
         ),

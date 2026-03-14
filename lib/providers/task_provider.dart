@@ -3,12 +3,6 @@ import '../models/Task.dart';
 
 class TaskProvider extends ChangeNotifier {
   List<Task> _tasks = [];
-  TaskStatus? _statusFilter;
-  TaskPriority? _priorityFilter;
-  bool _isLoading = false;
-
-  //===== Getters =====
-  bool get isLoading => _isLoading;
 
   List<Task> get tasks {
     var filtered = _tasks;
@@ -21,42 +15,37 @@ class TaskProvider extends ChangeNotifier {
       filtered = filtered.where((t) => t.priority == _priorityFilter).toList();
     }
 
-    // Tri par statut puis priorité
-    filtered.sort((a, b) {
-      final statusOrder = {
-        TaskStatus.inProgress: 0,
-        TaskStatus.todo: 1,
-        TaskStatus.done: 2,
-      };
-      final priorityOrder = {
-        TaskPriority.high: 0,
-        TaskPriority.medium: 1,
-        TaskPriority.low: 2,
-      };
-
-      final statusCompare = statusOrder[a.status]! - statusOrder[b.status]!;
-      if (statusCompare != 0) return statusCompare;
-
-      return priorityOrder[a.priority]! - priorityOrder[b.priority]!;
-    });
-
     return filtered;
   }
 
-  Map<TaskStatus, int> get taskCountByStatus {
-    final map = <TaskStatus, int>{};
-    for (var status in TaskStatus.values) {
-      map[status] = _tasks.where((t) => t.status == status).length;
-    }
-    return map;
+  TaskStatus? _statusFilter;
+  TaskPriority? _priorityFilter;
+  bool _isLoading = false;
+
+  bool get isLoading => _isLoading;
+
+  List<Task> get allTasks => _tasks;
+
+
+  int get todoCount =>
+      _tasks.where((t) => t.status == TaskStatus.todo).length;
+
+  int get inProgressCount =>
+      _tasks.where((t) => t.status == TaskStatus.inProgress).length;
+
+  int get doneCount =>
+      _tasks.where((t) => t.status == TaskStatus.done).length;
+
+  List<Task> getTasksByProject(String projectId) {
+    return _tasks.where((task) => task.projectId == projectId).toList();
   }
 
-  //===== Méthodes CRUD =====
-  Future<void> loadTasks(String projectId) async {
+  Future<void> loadTasks() async {
     _isLoading = true;
     notifyListeners();
-    // Charger les tâches depuis le storage
-    _tasks = []; // Assigner la liste réelle
+
+    await Future.delayed(const Duration(milliseconds: 300));
+
     _isLoading = false;
     notifyListeners();
   }
@@ -68,6 +57,7 @@ class TaskProvider extends ChangeNotifier {
 
   Future<void> updateTask(Task task) async {
     final index = _tasks.indexWhere((t) => t.id == task.id);
+
     if (index != -1) {
       _tasks[index] = task;
       notifyListeners();
@@ -80,14 +70,14 @@ class TaskProvider extends ChangeNotifier {
   }
 
   Future<void> updateTaskStatus(String taskId, TaskStatus status) async {
-    final task = _tasks.firstWhere((t) => t.id == taskId, orElse: () => null as Task);
-    if (task != null) {
-      task.status = status;
+    final index = _tasks.indexWhere((t) => t.id == taskId);
+
+    if (index != -1) {
+      _tasks[index].status = status;
       notifyListeners();
     }
   }
 
-  //===== Filtres =====
   void setStatusFilter(TaskStatus? status) {
     _statusFilter = status;
     notifyListeners();
